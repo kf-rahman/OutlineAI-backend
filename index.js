@@ -5,39 +5,43 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Root route
-app.get('/', (req, res) => {
-    res.send('Welcome to the LLM API!');
-});
+// Route to handle question answering
+app.post('/answer', async (req, res) => {
+    const { question, context } = req.body;
 
-app.post('/', async (req, res) => {
-    const systemPrompt  = 'you are a historian';
-    const userInput = 'can you tell me about the civil war'; // Hard-coded for now, can be dynamic from req.body as well
+    if (!question || !context) {
+        return res.status(400).json({ error: "Please provide both 'question' and 'context' in the request body." });
+    }
 
     try {
         const response = await axios.post(
-            'https://api-inference.huggingface.co/models/gpt2',  // Replace with your model of choice
+            'https://api-inference.huggingface.co/models/deepset/roberta-base-squad2',
             {
-                inputs: `${systemPrompt}\n${userInput}`,
+                inputs: { question, context },
             },
             {
                 headers: { Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}` },
             }
         );
 
-        // Extract the generated text from the response
-        const generatedText = response.data.generated_text || response.data[0]?.generated_text;
-
-        res.json({ generatedText });
-        console.log(generatedText);
+        // Return the answer from the model
+        res.json(response.data);
+        console.log(response.data);
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error generating text');
+        console.error("Error:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: "Failed to get response from Hugging Face API." });
     }
 });
 
+// Default route
+app.get('/', (req, res) => {
+    res.send('Welcome to the Hugging Face QA API!');
+});
+
+// Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
