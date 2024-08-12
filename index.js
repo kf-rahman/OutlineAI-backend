@@ -88,6 +88,56 @@ app.get('/callback', async (req, res) => {
         }
     });
 });
+
+
+app.post('/add-event', async (req, res) => {
+    console.log('Attempting to add an event.');
+
+    if (!tokens) {
+        console.error('No tokens found. Please authenticate first.');
+        return res.status(401).send('Please authenticate first by visiting /auth');
+    }
+
+    console.log('Setting OAuth credentials.');
+    oAuth2Client.setCredentials(tokens);
+
+    const { summary, description, start, end, timeZone } = req.body;
+    console.log('Event details received:', { summary, description, start, end, timeZone });
+
+    if (!summary || !start || !end) {
+        console.error('Missing required event details.');
+        return res.status(400).json({ error: "Please provide 'summary', 'start', and 'end' in the request body." });
+    }
+
+    const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
+
+    try {
+        const event = {
+    summary: summary,
+    start: {
+        date: start, // Example: '2024-08-13'
+    },
+    end: {
+        date: end, // Example: '2024-08-14'
+    },
+};
+
+        console.log('Inserting event into calendar:', event);
+        const eventResponse = await calendar.events.insert({
+            calendarId: 'primary', // Use 'primary' or the specific calendar ID
+            resource: event,
+        });
+
+        console.log('Event successfully added:', eventResponse.data);
+        res.json(eventResponse.data);
+    } catch (error) {
+        console.error('Error adding event:', error);
+        res.status(500).json({ error: 'Failed to add event to the calendar.' });
+    }
+});
+
+
+
 oAuth2Client.on('tokens', (tokens) => {
     if (tokens.refresh_token) {
         console.log('Refresh token received:', tokens.refresh_token);
