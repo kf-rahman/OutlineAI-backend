@@ -4,16 +4,15 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const context = "Please extract all the important dates that are listed. Format your response in a JSON format";
+const date_question = "Please extract all the important dates that are listed. Format your response in a JSON format";
 
 // Middleware to parse JSON bodies
 app.use(express.json());
-
 // Route to handle question answering
 app.post('/answer', async (req, res) => {
-    const { question, context } = req.body;
+    const { context } = req.body;
 
-    if (!question || !context) {
+    if (!context) {
         return res.status(400).json({ error: "Please provide both 'question' and 'context' in the request body." });
     }
 
@@ -21,7 +20,7 @@ app.post('/answer', async (req, res) => {
         const response = await axios.post(
             'https://api-inference.huggingface.co/models/deepset/roberta-base-squad2',
             {
-                inputs: { question, context:"Please extract all the important dates that are listed." },
+                inputs: { question:date_question, context },
             },
             {
                 headers: { Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}` },
