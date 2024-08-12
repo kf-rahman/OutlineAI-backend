@@ -12,8 +12,9 @@ app.get('/', (req, res) => {
     res.send('Welcome to the LLM API!');
 });
 
-app.post('/generate-text', async (req, res) => {
-    const { systemPrompt, userInput } = req.body;
+app.post('/', async (req, res) => {
+    const systemPrompt  = 'you are a historian';
+    const userInput = 'can you tell me about the civil war'; // Hard-coded for now, can be dynamic from req.body as well
 
     try {
         const response = await axios.post(
@@ -26,7 +27,11 @@ app.post('/generate-text', async (req, res) => {
             }
         );
 
-        res.json({ generatedText: response.data });
+        // Extract the generated text from the response
+        const generatedText = response.data.generated_text || response.data[0]?.generated_text;
+
+        res.json({ generatedText });
+        console.log(generatedText);
     } catch (error) {
         console.error(error);
         res.status(500).send('Error generating text');
