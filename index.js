@@ -24,9 +24,9 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 
 // In-memory storage for tokens (replace with a database in production)
 let tokens = {};
-
+const apiKey = "AIzaSyCf2OUI48rhKKeiiBmPEawC_L69fMsBA4w";
 // Initialize Google Generative AI
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEN_AI_KEY);
+const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -61,7 +61,7 @@ app.get('/callback', async (req, res) => {
 });
 
 // Endpoint to extract important dates from text
-app.post('/extract-dates', async (req, res) => {
+app.post('/extract-and-add-events', async (req, res) => {
     const { text } = req.body;
     if (!text) {
         return res.status(400).json({ error: "Please provide 'text' in the request body." });
@@ -70,20 +70,63 @@ app.post('/extract-dates', async (req, res) => {
     try {
         const prompt = `Extract all important dates from the following text. Format your response as a JSON array of objects, where each object has a 'date' field (in YYYY-MM-DD format if possible) and a 'description' field. Here's the text:\n\n${text}`;
         const result = await model.generateContent(prompt);
-        const output = result.response.text();
+        let output = result.response.text();
 
+        // Clean up the LLM response
+        output = output.replace(/```json\n|```/g, '').trim();
+
+        // Parse the cleaned output as JSON
         let extractedData;
         try {
-            extractedData = JSON.parse(output); // Convert LLM response to JSON
+            extractedData = JSON.parse(output);
         } catch (error) {
+            console.error("Failed to parse LLM output as JSON:", output);
             return res.status(500).json({ error: "Failed to parse LLM output as JSON.", output });
         }
 
-        res.json(extractedData); // Return extracted dates
+        // Check for valid tokens
+        if (!tokens) {
+            return res.status(401).send('Please authenticate first by visiting /auth');
+        }
+
+        // Set the OAuth credentials
+        oAuth2Client.setCredentials(tokens);
+
+        // Initialize the Google Calendar API
+        const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
+
+        // Loop through the extracted dates and create events
+        const eventPromises = extractedData.map(async (event) => {
+            const eventDetails = {
+                summary: event.description,
+                description: event.description,
+                start: { date: event.date }, // All-day event with just a date
+                end: { date: event.date },   // Google Calendar API requires a start and end date
+            };
+
+            try {
+                const eventResponse = await calendar.events.insert({
+                    calendarId: 'primary',
+                    resource: eventDetails,
+                });
+                return eventResponse.data;
+            } catch (error) {
+                console.error("Error adding event:", error);
+                return { error: 'Failed to add event to the calendar', event: eventDetails };
+            }
+        });
+
+        // Wait for all events to be created
+        const createdEvents = await Promise.all(eventPromises);
+
+        // Return the list of created events
+        res.json({ createdEvents });
     } catch (error) {
-        res.status(500).json({ error: "Failed to extract dates from the text." });
+        console.error("Error during LLM call or event creation:", error);
+        res.status(500).json({ error: "Failed to extract dates or create events." });
     }
 });
+
 
 // Endpoint to add event to the user's Google Calendar
 app.post('/add-event', async (req, res) => {
@@ -123,6 +166,28 @@ app.get('/test-llm', async (req, res) => {
         res.json({ output });
     } catch (error) {
         res.status(500).json({ error: "Failed to get response from LLM" });
+    }
+});
+app.post('/test-llm', async (req, res) => {
+    const { text } = req.body;
+    if (!text) {
+        return res.status(400).json({ error: "Please provide 'text' in the request body." });
+    }
+
+    try {
+        const prompt = `Extract all important dates from the following text. Format your response as a JSON array of objects, where each object has a 'date' field (in YYYY-MM-DD format if possible) and a 'description' field. Here's the text:\n\n${text}`;
+
+        const result = await model.generateContent(prompt);
+
+        // Log the raw response for debugging
+        const output = result.response.text();
+        console.log('LLM Raw Response:', output);
+
+        // Return the raw LLM response
+        res.json({ output });
+    } catch (error) {
+        console.error("Error during LLM call:", error);
+        res.status(500).json({ error: "Failed to get response from LLM." });
     }
 });
 
