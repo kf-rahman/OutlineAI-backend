@@ -24,9 +24,8 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 
 // In-memory storage for tokens (replace with a database in production)
 let tokens = {};
-const apiKey = "AIzaSyCf2OUI48rhKKeiiBmPEawC_L69fMsBA4w";
 // Initialize Google Generative AI
-const genAI = new GoogleGenerativeAI(apiKey);
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API);
 
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
