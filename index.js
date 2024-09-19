@@ -26,7 +26,7 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 let tokens = {};
 
 // Initialize Google Generative AI
-const genAI = new GoogleGenerativeAI("AIzaSyCf2OUI48rhKKeiiBmPEawC_L69fMsBA4w");
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEN_AI_KEY);
 
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -37,39 +37,30 @@ const generationConfig = {
     maxOutputTokens: 8192,
 };
 
+// OAuth authentication routes
 app.get('/auth', (req, res) => {
-    console.log('Authentication started.');
     const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: SCOPES,
     });
-    console.log('Redirecting to Google OAuth URL:', authUrl);
     res.redirect(authUrl);
 });
 
 app.get('/callback', async (req, res) => {
-    console.log('Received OAuth callback.');
     const code = req.query.code;
-    if (!code) {
-        console.error('No authorization code received.');
-        return res.status(400).send('No authorization code received.');
-    }
-    console.log('Authorization code received:', code);
+    if (!code) return res.status(400).send('No authorization code received.');
 
     try {
         const { tokens: newTokens } = await oAuth2Client.getToken(code);
-        console.log('Access token received:', newTokens);
-
         oAuth2Client.setCredentials(newTokens);
         tokens = newTokens;
-
         res.send('Authentication successful! You can now use the /extract-dates and /add-event endpoints.');
     } catch (error) {
-        console.error('Error retrieving access token:', error);
         res.status(400).send('Error retrieving access token');
     }
 });
 
+// Endpoint to extract important dates from text
 app.post('/extract-dates', async (req, res) => {
     const { text } = req.body;
     if (!text) {
@@ -79,34 +70,27 @@ app.post('/extract-dates', async (req, res) => {
     try {
         const prompt = `Extract all important dates from the following text. Format your response as a JSON array of objects, where each object has a 'date' field (in YYYY-MM-DD format if possible) and a 'description' field. Here's the text:\n\n${text}`;
         const result = await model.generateContent(prompt);
-        console.log(result)
         const output = result.response.text();
 
-        // Parse the JSON output
+        let extractedData;
+        try {
+            extractedData = JSON.parse(output); // Convert LLM response to JSON
+        } catch (error) {
+            return res.status(500).json({ error: "Failed to parse LLM output as JSON.", output });
+        }
 
+        res.json(extractedData); // Return extracted dates
     } catch (error) {
-        console.error("Error:", error);
-        console.log(text)
         res.status(500).json({ error: "Failed to extract dates from the text." });
     }
 });
 
+// Endpoint to add event to the user's Google Calendar
 app.post('/add-event', async (req, res) => {
-    console.log('Attempting to add an event.');
-
-    if (!tokens) {
-        console.error('No tokens found. Please authenticate first.');
-        return res.status(401).send('Please authenticate first by visiting /auth');
-    }
-
-    console.log('Setting OAuth credentials.');
-    oAuth2Client.setCredentials(tokens);
+    if (!tokens) return res.status(401).send('Please authenticate first by visiting /auth');
 
     const { summary, description, start, end } = req.body;
-    console.log('Event details received:', { summary, description, start, end });
-
     if (!summary || !start || !end) {
-        console.error('Missing required event details.');
         return res.status(400).json({ error: "Please provide 'summary', 'start', and 'end' in the request body." });
     }
 
@@ -114,38 +98,31 @@ app.post('/add-event', async (req, res) => {
 
     try {
         const event = {
-            summary: summary,
-            description: description,
-            start: { date: start },
-            end: { date: end },
+            summary,
+            description,
+            start: { dateTime: start },
+            end: { dateTime: end },
         };
 
-        console.log('Inserting event into calendar:', event);
         const eventResponse = await calendar.events.insert({
             calendarId: 'primary',
             resource: event,
         });
 
-        console.log('Event successfully added:', eventResponse.data);
         res.json(eventResponse.data);
     } catch (error) {
-        console.error('Error adding event:', error);
         res.status(500).json({ error: 'Failed to add event to the calendar.' });
     }
 });
 
+// Testing endpoint for LLM
 app.get('/test-llm', async (req, res) => {
     try {
-        const result = await model.generateContent("Hello, what's the weather like today?");
+        const result = await model.generateContent("What are the most important dates");
         const output = result.response.text();
         res.json({ output });
     } catch (error) {
-        console.error("Error in /test-llm:", error);
-        res.status(500).json({
-            error: "Failed to get response from LLM",
-            details: error.message,
-            stack: error.stack
-        });
+        res.status(500).json({ error: "Failed to get response from LLM" });
     }
 });
 
