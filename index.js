@@ -1,11 +1,10 @@
-const express = require('express');
-const axios = require('axios');
-require('dotenv').config();
+import express from 'express';
+import axios from 'axios';
+import dotenv from 'dotenv';
+import { google } from 'googleapis';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const date_question = "Please extract all the important dates that are listed. Format your response in a JSON format";
-const { google } = require('googleapis');
-const {response} = require("express");
-require('dotenv').config();
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,9 +25,17 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 // In-memory storage for tokens (replace with a database in production)
 let tokens = {};
 
-// Middleware to parse JSON bodies
-app.use(express.json());
-// Route to handle question answering
+// Initialize Google Generative AI
+const genAI = new GoogleGenerativeAI("AIzaSyCf2OUI48rhKKeiiBmPEawC_L69fMsBA4w");
+
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const generationConfig = {
+    temperature: 1,
+    topP: 0.95,
+    topK: 64,
+    maxOutputTokens: 8192,
+};
 
 app.get('/auth', (req, res) => {
     console.log('Authentication started.');
@@ -49,46 +56,40 @@ app.get('/callback', async (req, res) => {
     }
     console.log('Authorization code received:', code);
 
-    oAuth2Client.getToken(code, async (err, token) => {
-        if (err) {
-            console.error('Error retrieving access token:', err);
-            return res.status(400).send('Error retrieving access token');
-        }
-        console.log('Access token received:', token);
+    try {
+        const { tokens: newTokens } = await oAuth2Client.getToken(code);
+        console.log('Access token received:', newTokens);
 
-        // Set the credentials
-        oAuth2Client.setCredentials(token);
-        tokens = token;  // Store the token for future API calls
+        oAuth2Client.setCredentials(newTokens);
+        tokens = newTokens;
 
-        console.log('Tokens stored successfully.');
-
-        // Simulate a context for LLM request (this should normally come from your app or be part of your flow)
-        const context = "The event is on 20th August 2024. The deadline for submission is 15th August 2024.";
-
-        try {
-            const response = await axios.post(
-                'https://api-inference.huggingface.co/models/deepset/roberta-base-squad2',
-                {
-                    inputs: { question: date_question, context },
-                },
-                {
-                    headers: { Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}` },
-                }
-            );
-
-            // Return the answer from the model immediately after authentication
-            res.json({
-                message: 'Authentication successful! Here is the extracted data from LLM:',
-                data: response.data,
-            });
-
-        } catch (error) {
-            console.error("Error:", error.response ? error.response.data : error.message);
-            res.status(500).json({ error: "Failed to get response from Hugging Face API." });
-        }
-    });
+        res.send('Authentication successful! You can now use the /extract-dates and /add-event endpoints.');
+    } catch (error) {
+        console.error('Error retrieving access token:', error);
+        res.status(400).send('Error retrieving access token');
+    }
 });
 
+app.post('/extract-dates', async (req, res) => {
+    const { text } = req.body;
+    if (!text) {
+        return res.status(400).json({ error: "Please provide 'text' in the request body." });
+    }
+
+    try {
+        const prompt = `Extract all important dates from the following text. Format your response as a JSON array of objects, where each object has a 'date' field (in YYYY-MM-DD format if possible) and a 'description' field. Here's the text:\n\n${text}`;
+        const result = await model.generateContent(prompt);
+        console.log(result)
+        const output = result.response.text();
+
+        // Parse the JSON output
+
+    } catch (error) {
+        console.error("Error:", error);
+        console.log(text)
+        res.status(500).json({ error: "Failed to extract dates from the text." });
+    }
+});
 
 app.post('/add-event', async (req, res) => {
     console.log('Attempting to add an event.');
@@ -101,8 +102,8 @@ app.post('/add-event', async (req, res) => {
     console.log('Setting OAuth credentials.');
     oAuth2Client.setCredentials(tokens);
 
-    const { summary, description, start, end, timeZone } = req.body;
-    console.log('Event details received:', { summary, description, start, end, timeZone });
+    const { summary, description, start, end } = req.body;
+    console.log('Event details received:', { summary, description, start, end });
 
     if (!summary || !start || !end) {
         console.error('Missing required event details.');
@@ -113,18 +114,15 @@ app.post('/add-event', async (req, res) => {
 
     try {
         const event = {
-    summary: summary,
-    start: {
-        date: start, // Example: '2024-08-13'
-    },
-    end: {
-        date: end, // Example: '2024-08-14'
-    },
-};
+            summary: summary,
+            description: description,
+            start: { date: start },
+            end: { date: end },
+        };
 
         console.log('Inserting event into calendar:', event);
         const eventResponse = await calendar.events.insert({
-            calendarId: 'primary', // Use 'primary' or the specific calendar ID
+            calendarId: 'primary',
             resource: event,
         });
 
@@ -136,20 +134,21 @@ app.post('/add-event', async (req, res) => {
     }
 });
 
-
-
-oAuth2Client.on('tokens', (tokens) => {
-    if (tokens.refresh_token) {
-        console.log('Refresh token received:', tokens.refresh_token);
+app.get('/test-llm', async (req, res) => {
+    try {
+        const result = await model.generateContent("Hello, what's the weather like today?");
+        const output = result.response.text();
+        res.json({ output });
+    } catch (error) {
+        console.error("Error in /test-llm:", error);
+        res.status(500).json({
+            error: "Failed to get response from LLM",
+            details: error.message,
+            stack: error.stack
+        });
     }
-    console.log('Access token refreshed:', tokens.access_token);
-});
-// Default route
-app.get('/', (req, res) => {
-    res.send('Welcome to the Hugging Face QA API!');
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
