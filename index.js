@@ -5,6 +5,11 @@ import { google } from 'googleapis';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import "cors";
 
+const cors = require('cors');
+app.use(cors({
+  origin: 'https://out-line-ai-front-33bfehpw9-kf-rahmans-projects.vercel.app/', // Replace with your frontend's domain
+  credentials: true
+}));
 
 dotenv.config();
 
