@@ -2,22 +2,22 @@ import express from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { google } from 'googleapis';
+import * as cors from 'cors';  // Fix CORS import
 import { GoogleGenerativeAI } from "@google/generative-ai";
-const cors = import('cors');
-
 
 dotenv.config();
 
-const app = express();
+const app = express();  // Initialize app before using it
 const PORT = process.env.PORT || 3000;
+
+// Middleware to parse JSON bodies
 app.use(express.json());
+
+// Enable CORS
 app.use(cors({
   origin: 'https://out-line-ai-front-33bfehpw9-kf-rahmans-projects.vercel.app/', // Replace with your frontend's domain
   credentials: true
 }));
-// Middleware to parse JSON bodies
-app.use(express.json());
-
 // Configure OAuth2 client with credentials
 const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
