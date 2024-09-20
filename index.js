@@ -39,6 +39,13 @@ const generationConfig = {
 };
 
 // OAuth authentication routes
+app.get('/auth', (req, res) => {
+    const authUrl = oAuth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: SCOPES,
+    });
+    res.redirect(authUrl);
+});
 app.get('/', async (req, res) => {
    res.send('hello') ;
 });
