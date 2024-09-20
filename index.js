@@ -6,7 +6,6 @@ import { google } from 'googleapis';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
-const cors = import('cors');
 const app = express();  // Initialize app before using it
 const PORT = process.env.PORT || 3000;
 
@@ -14,10 +13,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Enable CORS
-app.use(cors({
-  origin: 'https://out-line-ai-front-33bfehpw9-kf-rahmans-projects.vercel.app/', // Replace with your frontend's domain
-  credentials: true
-}));
+
 // Configure OAuth2 client with credentials
 const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
