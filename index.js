@@ -37,7 +37,7 @@ const generationConfig = {
     topK: 64,
     maxOutputTokens: 8192,
 };
-app.get('/', req ,)
+
 // OAuth authentication routes
 app.get('/', async (req, res) => {
    res.send('hello') ;
