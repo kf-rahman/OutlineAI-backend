@@ -3,18 +3,19 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import { google } from 'googleapis';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
+import cors from 'cors';
 const cors = import('cors');
-app.use(cors({
-  origin: 'https://out-line-ai-front-33bfehpw9-kf-rahmans-projects.vercel.app/', // Replace with your frontend's domain
-  credentials: true
-}));
+
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
+app.use(express.json());
+app.use(cors({
+  origin: 'https://out-line-ai-front-33bfehpw9-kf-rahmans-projects.vercel.app/', // Replace with your frontend's domain
+  credentials: true
+}));
 // Middleware to parse JSON bodies
 app.use(express.json());
 
