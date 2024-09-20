@@ -58,6 +58,7 @@ app.get('/callback', async (req, res) => {
         const { tokens: newTokens } = await oAuth2Client.getToken(code);
         oAuth2Client.setCredentials(newTokens);
         tokens = newTokens;
+        res.redirect("https://out-line-ai-front-end.vercel.app/");
         res.send('Authentication successful! You can now use the /extract-dates and /add-event endpoints.');
     } catch (error) {
         res.status(400).send('Error retrieving access token');
