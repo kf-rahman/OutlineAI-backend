@@ -3,6 +3,8 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import { google } from 'googleapis';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+const cors = require('cors');
+app.use(cors());
 
 dotenv.config();
 
