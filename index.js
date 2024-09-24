@@ -6,13 +6,22 @@ import { google } from 'googleapis';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
-const app = express();  // Initialize app before using it
+  // Initialize app before using it
 const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON bodies
-app.use(express.json());
+let cors = import('cors')
+const app = express();
 
-// Enable CORS
+
+let whitelist = ["https://out-line-ai-front-gx7yr8tpc-kf-rahmans-projects.vercel.app/"]
+//add dev env variable to test locally
+const corsOptions = {
+    origin: whitelist
+}
+app.use(cors(corsOptions))
+app.use(express.json()) // for parsing application/json
+
+
 
 // Configure OAuth2 client with credentials
 const oAuth2Client = new google.auth.OAuth2(
