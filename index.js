@@ -34,7 +34,6 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 app.get('/auth', (req, res) => {
 
     res.set('Access-Control-Allow-Origin', '*');
-    res.send({ "msg": "This has CORS enabled " }) ;
     const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
 
