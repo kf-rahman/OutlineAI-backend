@@ -9,7 +9,7 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 const app = express();
 
-let whitelist = ["https://out-line-ai-front-j6hky9lyk-kf-rahmans-projects.vercel.app"];
+let whitelist = ["https://out-line-ai-front-ds7okp795-kf-rahmans-projects.vercel.app/"];
 const corsOptions = { origin: whitelist };
 app.use(cors(corsOptions));
 app.use(express.json());
