@@ -139,6 +139,9 @@ app.post('/extract-and-add-events', ensureAuthenticated, async (req, res) => {
         res.json({ createdEvents });
     } catch (error) {
         console.error("Error during LLM call or event creation:", error);
+        // If no content, send an empty JSON
+        res.status(200).json({});
+
         res.status(500).json({ error: "Failed to extract dates or create events." });
     }
 });
