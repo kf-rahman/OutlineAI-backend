@@ -35,7 +35,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 app.get('/auth', (req, res) => {
 
     res.set('Access-Control-Allow-Origin', '*');
-    res.send({ "msg": "This has CORS enabled 🎈" }) ;
+    res.send({ "msg": "This has CORS enabled " }) ;
     const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
 
@@ -48,7 +48,7 @@ app.get('/auth', (req, res) => {
 // OAuth callback route
 app.get('/callback', async (req, res) => {
         res.set('Access-Control-Allow-Origin', '*');
-    res.send({ "msg": "This has CORS enabled 🎈" }) ;
+
     const code = req.query.code;
 
     if (!code) return res.status(400).send('No authorization code received.');
