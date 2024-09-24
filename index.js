@@ -10,28 +10,14 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 // Whitelist allowed origins
-const whitelist = ["https://out-line-ai-front-l8hh4axxn-kf-rahmans-projects.vercel.app"];
+let whitelist = ["https://out-line-ai-front-l8hh4axxn-kf-rahmans-projects.vercel.app"];
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-  optionsSuccessStatus: 200, // For legacy browsers that fail on 204
-};
-
-// Use the CORS middleware with the specified options
-app.use(cors(corsOptions));
-
-// Ensure handling of OPTIONS requests (pre-flight requests)
-app.options('*', cors(corsOptions));
+    origin: whitelist
+}
 
 // JSON parser for incoming requests
-app.use(express.json());
+app.use(cors(corsOptions))
+app.use(express.json())
 
 
 const oAuth2Client = new google.auth.OAuth2(
@@ -47,8 +33,9 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 app.get('/auth', (req, res) => {
+
     res.set('Access-Control-Allow-Origin', '*');
-res.send({ "msg": "This has CORS enabled 🎈" }) ;
+    res.send({ "msg": "This has CORS enabled 🎈" }) ;
     const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
 
@@ -60,7 +47,10 @@ res.send({ "msg": "This has CORS enabled 🎈" }) ;
 
 // OAuth callback route
 app.get('/callback', async (req, res) => {
+        res.set('Access-Control-Allow-Origin', '*');
+    res.send({ "msg": "This has CORS enabled 🎈" }) ;
     const code = req.query.code;
+
     if (!code) return res.status(400).send('No authorization code received.');
 
     try {
@@ -91,7 +81,7 @@ const ensureAuthenticated = (req, res, next) => {
 // Extract and add events endpoint with automatic authentication
 app.post('/extract-and-add-events', ensureAuthenticated, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
-res.send({ "msg": "This has CORS enabled 🎈" })
+    res.send({ "msg": "This has CORS enabled 🎈" });
     const { text } = req.body;
     if (!text) {
         return res.status(400).json({ error: "Please provide 'text' in the request body." });
