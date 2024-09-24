@@ -10,8 +10,7 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 // Whitelist allowed origins
-let whitelist = ["https://out-line-ai-front-ds7okp795-kf-rahmans-projects.vercel.app/"];
-
+const whitelist = ["https://out-line-ai-front-ds7okp795-kf-rahmans-projects.vercel.app/"];
 const corsOptions = {
   origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
@@ -20,19 +19,31 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
 };
 
-// Use CORS middleware with options
+// Use CORS middleware with the options
 app.use(cors(corsOptions));
 
-// Set headers manually for all responses
+// This middleware ensures that all responses have the correct CORS headers
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
   next();
 });
 
+// Handle 401 errors to ensure CORS headers are still present
+app.use(function (err, req, res, next) {
+  if (err.name === 'UnauthorizedError') {
+    res.set('Access-Control-Allow-Origin', '*');  // Ensure CORS header is set
+    res.status(401).json({ error: 'Invalid Token' });
+  } else {
+    next(err);
+  }
+});
+
+// JSON parser
 app.use(express.json());
 
 
