@@ -46,12 +46,15 @@ let tokens = {};
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-// OAuth authentication route
 app.get('/auth', (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+res.send({ "msg": "This has CORS enabled 🎈" }) ;
     const authUrl = oAuth2Client.generateAuthUrl({
         access_type: 'offline',
+
         scope: SCOPES,
     });
+
     res.redirect(authUrl);
 });
 
@@ -87,6 +90,8 @@ const ensureAuthenticated = (req, res, next) => {
 
 // Extract and add events endpoint with automatic authentication
 app.post('/extract-and-add-events', ensureAuthenticated, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+res.send({ "msg": "This has CORS enabled 🎈" })
     const { text } = req.body;
     if (!text) {
         return res.status(400).json({ error: "Please provide 'text' in the request body." });
