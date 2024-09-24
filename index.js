@@ -19,7 +19,6 @@ const corsOptions = {
 app.use(cors(corsOptions))
 app.use(express.json())
 
-
 const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
