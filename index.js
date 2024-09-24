@@ -4,12 +4,12 @@ import dotenv from 'dotenv';
 import { google } from 'googleapis';
  // Fix CORS import
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
+import cors from 'cors';
 dotenv.config();
   // Initialize app before using it
 const PORT = process.env.PORT || 3000;
 
-let cors = import('cors')
+
 const app = express();
 
 
