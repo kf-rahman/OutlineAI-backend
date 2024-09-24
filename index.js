@@ -20,10 +20,15 @@ const corsOptions = {
     }
   },
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+  optionsSuccessStatus: 200, // For legacy browsers that fail on 204 status
 };
 
 // Use CORS middleware with the options
 app.use(cors(corsOptions));
+
+// Ensure handling of OPTIONS requests
+app.options('*', cors(corsOptions)); // Enable pre-flight requests for all routes
 
 // This middleware ensures that all responses have the correct CORS headers
 app.use(function (req, res, next) {
@@ -31,16 +36,6 @@ app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
   next();
-});
-
-// Handle 401 errors to ensure CORS headers are still present
-app.use(function (err, req, res, next) {
-  if (err.name === 'UnauthorizedError') {
-    res.set('Access-Control-Allow-Origin', '*');  // Ensure CORS header is set
-    res.status(401).json({ error: 'Invalid Token' });
-  } else {
-    next(err);
-  }
 });
 
 // JSON parser
