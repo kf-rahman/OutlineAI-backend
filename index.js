@@ -82,6 +82,7 @@ const ensureAuthenticated = (req, res, next) => {
 app.post('/extract-and-add-events', ensureAuthenticated, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.send({ "msg": "This has CORS enabled 🎈" });
+    console.log(req.body);
     const { text } = req.body;
     if (!text) {
         return res.status(400).json({ error: "Please provide 'text' in the request body." });
@@ -93,7 +94,7 @@ app.post('/extract-and-add-events', ensureAuthenticated, async (req, res) => {
         let output = result.response.text();
 
         // Clean up the LLM response
-        output = output.replace(/```json\n|```/g, '').trim();
+        //output = output.replace(/```json\n|```/g, '').trim();
 
         // Parse the cleaned output as JSON
         let extractedData;
