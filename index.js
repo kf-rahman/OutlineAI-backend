@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 // Whitelist allowed origins
-const whitelist = ["https://out-line-ai-front-ds7okp795-kf-rahmans-projects.vercel.app/"];
+const whitelist = ["https://out-line-ai-front-l8hh4axxn-kf-rahmans-projects.vercel.app"];
 const corsOptions = {
   origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
@@ -19,26 +19,18 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
-  optionsSuccessStatus: 200, // For legacy browsers that fail on 204 status
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  optionsSuccessStatus: 200, // For legacy browsers that fail on 204
 };
 
-// Use CORS middleware with the options
+// Use the CORS middleware with the specified options
 app.use(cors(corsOptions));
 
-// Ensure handling of OPTIONS requests
-app.options('*', cors(corsOptions)); // Enable pre-flight requests for all routes
+// Ensure handling of OPTIONS requests (pre-flight requests)
+app.options('*', cors(corsOptions));
 
-// This middleware ensures that all responses have the correct CORS headers
-app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-  next();
-});
-
-// JSON parser
+// JSON parser for incoming requests
 app.use(express.json());
 
 
