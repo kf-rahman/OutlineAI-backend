@@ -92,7 +92,7 @@ app.post('/extract-and-add-events', ensureAuthenticated, async (req, res) => {
         const prompt = `Extract all important dates from the following text. Format your response as a JSON array of objects, where each object has a 'date' field (in YYYY-MM-DD format if possible) and a 'description' field. Here's the text:\n\n${text}`;
         const result = await model.generateContent(prompt);
         let output = result.response.text();
-
+        console.log(output)
         // Clean up the LLM response
         //output = output.replace(/```json\n|```/g, '').trim();
 
