@@ -57,7 +57,7 @@ app.get('/callback', async (req, res) => {
     oAuth2Client.setCredentials(newTokens);
 
     // Redirect back to the frontend with the access token
-    res.redirect(`https://out-line-ai-front-6gpx2nj52-kf-rahmans-projects.vercel.app/?token=${newTokens.access_token}`);
+    res.redirect(`https://out-line-ai-front-end.vercel.app/?token=${newTokens.access_token}`);
   } catch (error) {
     res.status(400).send('Error retrieving access token');
   }
