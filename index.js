@@ -45,23 +45,24 @@ app.get('/auth', (req, res) => {
 
 // OAuth callback route
 app.get('/callback', async (req, res) => {
-        res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Origin', '*');
 
-    const code = req.query.code;
+  const code = req.query.code;  // This is the authorization code from Google
 
-    if (!code) return res.status(400).send('No authorization code received.');
+  if (!code) return res.status(400).send('No authorization code received.');
 
-    try {
-        const { tokens: newTokens } = await oAuth2Client.getToken(code);
-        oAuth2Client.setCredentials(newTokens);
-        tokens = newTokens;
+  try {
+    // Exchange the authorization code for an access token
+    const { tokens: newTokens } = await oAuth2Client.getToken(code);  // Get the access token
+    oAuth2Client.setCredentials(newTokens);
 
-        // Redirect back to the frontend or automatically trigger the event extraction
-        res.redirect(`https://out-line-ai-front-j6hky9lyk-kf-rahmans-projects.vercel.app/?token=${newTokens.access_token}`);
-    } catch (error) {
-        res.status(400).send('Error retrieving access token');
-    }
+    // Redirect back to the frontend with the access token
+    res.redirect(`https://out-line-ai-front-6gpx2nj52-kf-rahmans-projects.vercel.app/?token=${newTokens.access_token}`);
+  } catch (error) {
+    res.status(400).send('Error retrieving access token');
+  }
 });
+
 
 // Middleware to check authentication and auto-redirect if not authenticated
 const ensureAuthenticated = (req, res, next) => {
