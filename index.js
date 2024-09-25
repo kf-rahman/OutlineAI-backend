@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 // Whitelist allowed origins
-let whitelist = ["https://out-line-ai-front-76erayx9j-kf-rahmans-projects.vercel.appp"];
+let whitelist = ["https://out-line-ai-front-end.vercel.app/"];
 const corsOptions = {
     origin: whitelist
 }
