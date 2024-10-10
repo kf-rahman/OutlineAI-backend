@@ -64,6 +64,13 @@ app.get('/callback', async (req, res) => {
 
     // Redirect to frontend with access token
     if (tokens.access_token) {
+        console.log("Token to be sent in redirect:", tokens.access_token);
+if (tokens.access_token) {
+  res.redirect(`https://out-line-ai-front-end-kf-rahmans-projects.vercel.app/?token=${tokens.access_token}`);
+} else {
+  res.status(400).send('Access token not received.');
+}
+
       res.redirect(`https://out-line-ai-front-end-kf-rahmans-projects.vercel.app/?token=${tokens.access_token}`);
     } else {
       res.status(400).send('Access token not received.');
