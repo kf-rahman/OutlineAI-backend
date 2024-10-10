@@ -40,6 +40,7 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+// Redirect user to Google OAuth for authentication
 app.get('/auth', (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     const authUrl = oAuth2Client.generateAuthUrl({
@@ -49,7 +50,7 @@ app.get('/auth', (req, res) => {
     res.redirect(authUrl);
 });
 
-// OAuth callback route
+// OAuth callback route for exchanging code for access token
 app.get('/callback', async (req, res) => {
   const code = req.query.code;
 
@@ -60,7 +61,13 @@ app.get('/callback', async (req, res) => {
   try {
     const { tokens } = await oAuth2Client.getToken(code);
     console.log("Access Token:", tokens.access_token);
-    res.redirect(`https://out-line-ai-front-end-kf-rahmans-projects.vercel.app/?token=${tokens.access_token}`);
+
+    // Redirect to frontend with access token
+    if (tokens.access_token) {
+      res.redirect(`https://out-line-ai-front-end-kf-rahmans-projects.vercel.app/?token=${tokens.access_token}`);
+    } else {
+      res.status(400).send('Access token not received.');
+    }
   } catch (error) {
     console.error('Error retrieving access token:', error);
     res.status(400).send('Error retrieving access token.');
